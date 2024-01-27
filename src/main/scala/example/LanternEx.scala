@@ -43,19 +43,23 @@ object LanternEx extends App {
         }
     })
 
-    // fail, adding random condition
+    // fail, stateful random number generator is treated as stateless
     Example.add({
+        val r1 = new scala.util.Random(1)
         val gr = new DslDriverScala[Double,Double] with DiffApi {
             def snippet(x: Rep[Double]): Rep[Double] = {
                 val minus_1 = (new NumR(-1.0, var_new(0.0)))
-                gradR(x => IF (Random.nextBoolean()) { minus_1*x } { x })(x)
+                gradR(x => IF (r1.nextBoolean()) { minus_1*x } { x })(x)
             }
         }
-        def grad(x: Double) = if (x > 0) -1 else 1
-        //zt fail. Random.nextBoolean is evaluated dynamically, not statically
-        // for (x <- (-10 until 100)) {
-        //   assert(gr.eval(x) == grad(x))
-        // }
+
+        val ADResults = Range(-10, 10).map(i => gr.eval(i))
+        // println(ADResults)
+        // ADResults: Vector(-1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0)
+        val r2 = new scala.util.Random(1)
+        val TrueResults = Range(-10, 10).map(i => if (r2.nextBoolean()) -1 else 1)
+        // println(TrueResults)
+        // TrueResults: Vector(-1, 1, 1, 1, 1, 1, 1, -1, -1, -1, 1, 1, -1, 1, -1, -1, -1, -1, -1, 1)
     })
 
     Example.add({
